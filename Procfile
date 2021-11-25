@@ -1,1 +1,1 @@
-web: java -jar target/pharmagator-1.0.0.jar
+web: java -jar api/build/libs/api-0.0.1-SNAPSHOT.jar

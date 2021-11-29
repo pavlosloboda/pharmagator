@@ -5,11 +5,13 @@ import com.eleks.academy.pharmagator.dataproviders.dto.anc.ANCMedicineDto;
 import com.eleks.academy.pharmagator.dataproviders.dto.anc.ANCMedicinesResponse;
 import com.eleks.academy.pharmagator.dataproviders.dto.anc.ANCSubcategoryDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.Collection;
 import java.util.List;
@@ -17,6 +19,7 @@ import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @Qualifier("pharmacyANCDataProvider")
 public class PharmacyANCDataProvider implements DataProvider {
@@ -35,10 +38,15 @@ public class PharmacyANCDataProvider implements DataProvider {
 
     @Override
     public Stream<MedicineDto> loadData() {
-        return this.fetchCategories().stream()
-                .map(category -> category.getSubcategories().get(0))
-                .map(ANCSubcategoryDto::getLink)
-                .flatMap(this::fetchProductsByCategory);
+        try {
+            return this.fetchCategories().stream()
+                    .map(category -> category.getSubcategories().get(0))
+                    .map(ANCSubcategoryDto::getLink)
+                    .flatMap(this::fetchProductsByCategory);
+        } catch (WebClientResponseException exception) {
+            log.info(exception.getMessage(), exception);
+            return Stream.empty();
+        }
     }
 
     private List<ANCSubcategoryDto> fetchCategories() {

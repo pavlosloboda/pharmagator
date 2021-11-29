@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.Collection;
 import java.util.List;
@@ -53,13 +54,18 @@ public class PharmacyRozetkaDataProvider implements DataProvider {
 
     @Override
     public Stream<MedicineDto> loadData() {
-        return Stream.iterate(1, page -> page + 1)
-                .limit(pageLimit)
-                .map(this::fetchProductIds)
-                .flatMap(Optional::stream)
-                .takeWhile(response -> response.getShowNext() != 0)
-                .map(RozetkaProductIdsResponseData::getIds)
-                .flatMap(this::fetchProducts);
+        try {
+            return Stream.iterate(1, page -> page + 1)
+                    .limit(pageLimit)
+                    .map(this::fetchProductIds)
+                    .flatMap(Optional::stream)
+                    .takeWhile(response -> response.getShowNext() != 0)
+                    .map(RozetkaProductIdsResponseData::getIds)
+                    .flatMap(this::fetchProducts);
+        } catch (WebClientResponseException exception) {
+            log.info(exception.getMessage(), exception);
+            return Stream.empty();
+        }
     }
 
     private Optional<RozetkaProductIdsResponseData> fetchProductIds(int page) {

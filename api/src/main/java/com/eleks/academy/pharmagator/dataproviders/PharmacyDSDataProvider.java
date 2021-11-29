@@ -6,11 +6,13 @@ import com.eleks.academy.pharmagator.dataproviders.dto.ds.DSMedicineDto;
 import com.eleks.academy.pharmagator.dataproviders.dto.ds.DSMedicinesResponse;
 import com.eleks.academy.pharmagator.dataproviders.dto.ds.FilterRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
@@ -19,6 +21,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @Qualifier("pharmacyDSDataProvider")
 public class PharmacyDSDataProvider implements DataProvider {
@@ -43,12 +46,17 @@ public class PharmacyDSDataProvider implements DataProvider {
 
     @Override
     public Stream<MedicineDto> loadData() {
-        return this.fetchCategories().stream()
-                .filter(categoryDto -> categoryDto.getName().equals("Медикаменти"))
-                .map(CategoryDto::getChildren)
-                .flatMap(Collection::stream)
-                .map(CategoryDto::getSlug)
-                .flatMap(this::fetchMedicinesByCategory);
+        try {
+            return this.fetchCategories().stream()
+                    .filter(categoryDto -> categoryDto.getName().equals("Медикаменти"))
+                    .map(CategoryDto::getChildren)
+                    .flatMap(Collection::stream)
+                    .map(CategoryDto::getSlug)
+                    .flatMap(this::fetchMedicinesByCategory);
+        } catch (WebClientResponseException exception) {
+            log.info(exception.getMessage(), exception);
+            return Stream.empty();
+        }
     }
 
     private List<CategoryDto> fetchCategories() {

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -40,37 +41,40 @@ public class PharmacyLiki24DataProvider implements DataProvider {
 
     @Override
     public Stream<MedicineDto> loadData() {
+        try {
+            BiConsumer<Long, List<Liki24MedicinesResponse>> fillListByMedicineResponse = (page, medicinesResponseList1) -> {
+                Liki24MedicinesResponse medicinesResponse = getLiki24MedicinesResponse(page);
+                medicinesResponseList1.add(medicinesResponse);
+            };
 
-        BiConsumer<Long, List<Liki24MedicinesResponse>> fillListByMedicineResponse = (page, medicinesResponseList1) -> {
-            Liki24MedicinesResponse medicinesResponse = getLiki24MedicinesResponse(page);
-            medicinesResponseList1.add(medicinesResponse);
-        };
+            Liki24MedicinesResponse liki24MedicinesResponse = getLiki24MedicinesResponse(initialPageIndex);
 
-        Liki24MedicinesResponse liki24MedicinesResponse = getLiki24MedicinesResponse(initialPageIndex);
+            if (liki24MedicinesResponse != null) {
+                log.info("Start fetching: " + LocalDateTime.now());
 
-        if (liki24MedicinesResponse != null) {
-            log.info("Start fetching: " + LocalDateTime.now());
+                Long totalPages = liki24MedicinesResponse.getTotalPages();
+                List<Liki24MedicinesResponse> medicinesResponseList = new ArrayList<>();
+                medicinesResponseList.add(liki24MedicinesResponse);
 
-            Long totalPages = liki24MedicinesResponse.getTotalPages();
-            List<Liki24MedicinesResponse> medicinesResponseList = new ArrayList<>();
-            medicinesResponseList.add(liki24MedicinesResponse);
+                long startFetchPage = initialPageIndex + 1;
 
-            long startFetchPage = initialPageIndex + 1;
+                totalPages = totalPages > pageLimit ? pageLimit : totalPages;
 
-            totalPages = totalPages > pageLimit ? pageLimit : totalPages;
+                LongStream.rangeClosed(startFetchPage, totalPages)
+                        .parallel()
+                        .forEach(pageNumber -> fillListByMedicineResponse.accept(pageNumber, medicinesResponseList));
 
-            LongStream.rangeClosed(startFetchPage, totalPages)
-                    .parallel()
-                    .forEach(pageNumber -> fillListByMedicineResponse.accept(pageNumber, medicinesResponseList));
-
-            log.info("End Fetching: " + LocalDateTime.now());
-            return medicinesResponseList.stream()
-                    .filter(Objects::nonNull)
-                    .map(Liki24MedicinesResponse::getItems)
-                    .flatMap(Collection::stream)
-                    .map(this::mapToDataProviderMedicineDto);
+                log.info("End Fetching: " + LocalDateTime.now());
+                return medicinesResponseList.stream()
+                        .filter(Objects::nonNull)
+                        .map(Liki24MedicinesResponse::getItems)
+                        .flatMap(Collection::stream)
+                        .map(this::mapToDataProviderMedicineDto);
+            }
+        } catch (WebClientResponseException exception) {
+            log.info(exception.getMessage(), exception);
         }
-        return Stream.of();
+        return Stream.empty();
     }
 
     private Liki24MedicinesResponse getLiki24MedicinesResponse(Long page) {

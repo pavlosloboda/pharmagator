@@ -15,6 +15,31 @@
     <div class="jumbotron">
       <h1 class="display-4">Price</h1>
     </div>
+
+
+    <div th:switch="${pricesMap}">
+      <h2 th:case="null">No medicines yet!</h2>
+      <div th:case="*">
+        <table>
+          <thead>
+          <th class="background">
+            <div><span class="bottom">Medicine⬎</span>
+              <span class="top">Pharmacy&#11106;</span>
+              <div class="line"></div>
+            </div>
+          </th>
+          <th th:each="pharmacy : ${pharmacies}" th:text="${pharmacy.name}"></th>
+          </thead>
+          <tbody>
+          <tr th:each="entry1, stats1 : ${pricesMap}" th:with="prices=${entry1.value}">
+            <td th:text="${entry1.key}"></td>
+            <td th:each="pharmacy : ${pharmacies}" th:text="${prices.get(pharmacy.id)}"></td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+      <!--            <p><a href="/signup">Add a new user</a></p>-->
+    </div>
   </div>
 </main>
 

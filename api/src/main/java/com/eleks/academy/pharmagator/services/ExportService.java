@@ -26,7 +26,7 @@ public class ExportService {
     public XSSFWorkbook getExportData() {
         Map<String, Map<Long, BigDecimal>> prices;
 
-        prices = getMapPrices();
+        prices = getMapPricesFromDatabase();
 
         XSSFWorkbook workbook = new XSSFWorkbook();
 
@@ -55,7 +55,7 @@ public class ExportService {
         return workbook;
     }
 
-    public Map<String, Map<Long, BigDecimal>> getMapPrices() {
+    public Map<String, Map<Long, BigDecimal>> getMapPricesFromDatabase() {
         return priceRepository.findAllMedicinesPrices()
                 .stream()
                 .collect(Collectors.groupingBy(MedicinePrice::getTitle,

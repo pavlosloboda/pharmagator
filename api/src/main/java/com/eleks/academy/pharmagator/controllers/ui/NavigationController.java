@@ -36,7 +36,7 @@ public class NavigationController {
     public String getPrices(Model model) {
         List<Pharmacy> pharmacies = pharmacyService.findAll();
 
-        model.addAttribute("pricesMap", exportService.getMapPrices());
+        model.addAttribute("pricesMap", exportService.getMapPricesFromDatabase());
         model.addAttribute("pharmacies", pharmacies);
         return "price";
     }

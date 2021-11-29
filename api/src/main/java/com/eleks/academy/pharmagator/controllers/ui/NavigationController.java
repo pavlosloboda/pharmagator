@@ -7,9 +7,9 @@ import com.eleks.academy.pharmagator.services.PharmacyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import java.util.HashMap;
 import java.util.List;
 
 @Controller
@@ -21,21 +21,20 @@ public class NavigationController {
     private final PharmacyService pharmacyService;
     private final ExportService exportService;
 
-    @RequestMapping({"", "/", "/index", "/index.html", "/home", "/homepage"})
+    @GetMapping({"", "/", "/index", "/index.html", "/home", "/homepage"})
     public String getHomePage() {
         return "index";
     }
 
-    @RequestMapping("/medicine")
+    @GetMapping("/medicine")
     public String getMedicines(Model model) {
         model.addAttribute("meds", medicineService.findAll());
         return "medicine";
     }
 
-    @RequestMapping("/price")
+    @GetMapping("/price")
     public String getPrices(Model model) {
         List<Pharmacy> pharmacies = pharmacyService.findAll();
-        HashMap<Long, String> pharmaciesWithId = new HashMap<>(pharmacies.size());
 
         model.addAttribute("pricesMap", exportService.getMapPrices());
         model.addAttribute("pharmacies", pharmacies);

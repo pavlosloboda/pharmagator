@@ -57,7 +57,7 @@ jobs:
         java-version: 17
     
     - name: Build
-      run: ./gradlew build
+      run: ./gradlew build -x test
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
